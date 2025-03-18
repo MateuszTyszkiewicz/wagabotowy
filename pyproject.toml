@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = []
+
+[project]
+name = "Wagabotowy"
+version = "1.0"
+description = "Discord app to summarize discussions, posted YT videos and definitions"
+authors = [
+    { name = "Mateusz Tyszkiewicz", email = "mateusztycha@gmail.com" },
+    { name = "Klaudia Wolszon", email = "klaudiawolszon01@gmail.com" }
+]
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.urls]
+repository = "https://github.com/MateuszTyszkiewicz/discord-llm-fun"
