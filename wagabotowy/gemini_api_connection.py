@@ -6,7 +6,7 @@ import keyring
 import google.generativeai as genai
 import local_yt_summary as yts
 import custom_exceptions as e
-import constants
+import app_parameters
 
 
 def configure_genai():
@@ -17,18 +17,20 @@ def configure_genai():
     """
     try:
         # Check if running inside a Podman container by looking for Podman secrets
-        if os.path.exists('/run/secrets/'):
+        if os.path.exists("/run/secrets/"):
             # Read API key from Podman secrets
             with open("/run/secrets/GOOGLE_AI_API_KEY", "r") as secret_file:
                 GOOGLE_AI_API_KEY = secret_file.read().strip()
             logging.info("GOOGLE_AI_API_KEY fetched from Podman secrets.")
         else:
             # Use keyring to fetch the API key locally
-            GOOGLE_AI_API_KEY = keyring.get_password("GOOGLE_AI_API_KEY", "GOOGLE_AI_API_KEY")
+            GOOGLE_AI_API_KEY = keyring.get_password(
+                "GOOGLE_AI_API_KEY", "Wagabotowy"
+            )
             if not GOOGLE_AI_API_KEY:
                 raise ValueError("GOOGLE_AI_API_KEY not found in keyring.")
             logging.info("GOOGLE_AI_API_KEY fetched from keyring.")
-        
+
         genai.configure(api_key=GOOGLE_AI_API_KEY)
 
     except Exception as e:
@@ -50,12 +52,12 @@ def create_youtube_summary(message_with_yt_link):
     """
     transcript, language = yts.create_transcript(message_with_yt_link)
     if language.startswith("Polish"):
-        system_instruction = constants.GEMINI_SYS_INSTRUCTION_YT_PL
+        system_instruction = app_parameters.GEMINI_SYS_INSTRUCTION_YT_PL
     else:
-        system_instruction = constants.GEMINI_SYS_INSTRUCTION_YT_EN
+        system_instruction = app_parameters.GEMINI_SYS_INSTRUCTION_YT_EN
     model = genai.GenerativeModel(
-        constants.MODEL_GOOGLE_GEMINI["flash_lite"],
-        generation_config=constants.GEMINI_LLM_CONFIG,
+        app_parameters.MODEL_GOOGLE_GEMINI["flash_lite"],
+        generation_config=app_parameters.GEMINI_LLM_CONFIG,
         system_instruction=system_instruction,
     )
     try:
@@ -77,9 +79,9 @@ def create_discussion_summary(content):
         str: Summary of the discussion.
     """
     model = genai.GenerativeModel(
-        constants.MODEL_GOOGLE_GEMINI["flash_lite"],
-        generation_config=constants.GEMINI_LLM_CONFIG,
-        system_instruction=constants.GEMINI_SYS_INSTRUCTION_DISCUSSION_SUMMARY,
+        app_parameters.MODEL_GOOGLE_GEMINI["flash_lite"],
+        generation_config=app_parameters.GEMINI_LLM_CONFIG,
+        system_instruction=app_parameters.GEMINI_SYS_INSTRUCTION_DISCUSSION_SUMMARY,
     )
     try:
         response = model.generate_content([f"Rozmowa: {content[:10000]}"])
@@ -116,9 +118,9 @@ def describe_thing_pl(thing, channel_for_context, max_words=3, max_word_length=2
         if len(word) > max_word_length:
             raise e.TryinToOmitWordsLimitError("Word too long")
     model = genai.GenerativeModel(
-        constants.MODEL_GOOGLE_GEMINI["flash_lite"],
-        generation_config=constants.GEMINI_LLM_CONFIG,
-        system_instruction=constants.GEMINI_SYS_INSTRUCTION_DESCRIPTION_PL,
+        app_parameters.MODEL_GOOGLE_GEMINI["flash_lite"],
+        generation_config=app_parameters.GEMINI_LLM_CONFIG,
+        system_instruction=app_parameters.GEMINI_SYS_INSTRUCTION_DESCRIPTION_PL,
     )
     prompt = f"Pojęcie do stworzenia definicji: {thing}\n Nazwa kanału: {channel_for_context}"
     logging.info("Prompt: %s", prompt)

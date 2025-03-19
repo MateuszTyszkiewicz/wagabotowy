@@ -1,7 +1,7 @@
 import re
 import logging
 
-import constants
+import app_parameters
 
 from ollama import chat, ChatResponse
 
@@ -16,7 +16,7 @@ def generate_summary(model, content):
     Returns:
         str: Summary of the discussion.
     """
-    system_instruction = constants.BIELIK_SYS_INSTRUCTION_DISCUSSION_SUMMARY
+    system_instruction = app_parameters.BIELIK_SYS_INSTRUCTION_DISCUSSION_SUMMARY
     messages = [
         {
             "role": "system",

@@ -107,3 +107,11 @@ DEEPSEEK_SYS_INSTRUCTION_YT = (
     "I don't have to get into technical details, "
     "I just need to tell what the video is about."
 )
+
+# Cooldown rules
+
+COOLDOWN_RULES = {"requests": 3, "timestamp": 60}
+
+# TLDR messages rules
+
+TLDR_MESSAGES = {"default": 50, "min": 30, "max": 300}
