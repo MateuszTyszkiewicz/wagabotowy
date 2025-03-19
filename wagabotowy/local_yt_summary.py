@@ -1,7 +1,7 @@
 import re
 
 import custom_exceptions as e
-import constants
+import app_parameters
 
 from youtube_transcript_api import YouTubeTranscriptApi
 from ollama import chat, ChatResponse
@@ -17,7 +17,7 @@ def generate_pl_summary(model, transcript):
     Returns:
         str: Summary of the transcript created by the model.
     """
-    system_instruction = constants.BIELIK_SYS_INSTRUCTION_YT
+    system_instruction = app_parameters.BIELIK_SYS_INSTRUCTION_YT
     messages = [
         {
             "role": "system",
@@ -33,7 +33,7 @@ def generate_pl_summary(model, transcript):
         model=model,
         stream=False,
         messages=messages,
-        options=constants.SETTINGS_YT_SUMMARY,
+        options=app_parameters.SETTINGS_YT_SUMMARY,
     )
     pattern = "<think>.*?</think>"
     valid_response = re.sub(
@@ -53,7 +53,7 @@ def generate_en_summary(model, transcript):
     Returns:
         str: Summary of the transcript created by the model.
     """
-    system_instruction = constants.DEEPSEEK_SYS_INSTRUCTION_YT
+    system_instruction = app_parameters.DEEPSEEK_SYS_INSTRUCTION_YT
     messages = [
         {
             "role": "system",
@@ -66,7 +66,7 @@ def generate_en_summary(model, transcript):
     ]
 
     response: ChatResponse = chat(
-        model=model, messages=messages, options=constants.SETTINGS_YT_SUMMARY
+        model=model, messages=messages, options=app_parameters.SETTINGS_YT_SUMMARY
     )
     pattern = "<think>.*?</think>"
     valid_response = re.sub(
@@ -142,11 +142,11 @@ def generate_summary(message_with_yt_link, ez_mode):
         model_size = "normal"
     if language.startswith("Polish"):
         summary = generate_pl_summary(
-            constants.MODEL_YT_SUMMARY_PL_LOCAL[model_size], transcript
+            app_parameters.MODEL_YT_SUMMARY_PL_LOCAL[model_size], transcript
         )
         return summary
     if language.startswith("English"):
         summary = generate_en_summary(
-            constants.MODEL_YT_SUMMARY_PL_LOCAL[model_size], transcript
+            app_parameters.MODEL_YT_SUMMARY_PL_LOCAL[model_size], transcript
         )
         return summary

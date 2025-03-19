@@ -8,7 +8,7 @@ from datetime import datetime
 import sys
 import os
 
-import constants
+import app_parameters
 import custom_exceptions as e
 import local_yt_summary as yts
 import gemini_api_connection as gapi
@@ -22,7 +22,9 @@ from discord.ext import commands
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix="!", intents=intents, heartbeat_timeout=60)
+bot = commands.Bot(
+    command_prefix=commands.when_mentioned, intents=intents, heartbeat_timeout=60
+)
 start_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 executor = concurrent.futures.ThreadPoolExecutor()
 
@@ -42,6 +44,7 @@ def create_parser():
     )
     return parser
 
+
 def get_discord_bot_token():
     """
     Fetches the DISCORD_BOT_TOKEN depending on the runtime environment.
@@ -57,11 +60,13 @@ def get_discord_bot_token():
             logging.info("DISCORD_BOT_TOKEN fetched from Podman secrets.")
         else:
             # Use keyring to fetch the API key locally
-            DISCORD_BOT_TOKEN = keyring.get_password("DISCORD_BOT_TOKEN", "DISCORD_BOT_TOKEN")
+            DISCORD_BOT_TOKEN = keyring.get_password(
+                "DISCORD_BOT_TOKEN", "Wagabotowy"
+            )
             if not DISCORD_BOT_TOKEN:
                 raise ValueError("DISCORD_BOT_TOKEN not found in keyring.")
             logging.info("DISCORD_BOT_TOKEN fetched from keyring.")
-        
+
         return DISCORD_BOT_TOKEN
 
     except Exception as e:
@@ -102,8 +107,12 @@ async def hello(ctx):
 @bot.command(
     help="Tworzy podsumowanie dyskusji do X wiadomości wstecz (domyślnie 50, min 5, max 200)"
 )
-@commands.cooldown(3, 60, commands.BucketType.user)
-async def tldr(ctx, messages_limit=50):
+@commands.cooldown(
+    app_parameters.COOLDOWN_RULES["requests"],
+    app_parameters.COOLDOWN_RULES["timestamp"],
+    commands.BucketType.user,
+)
+async def tldr(ctx, messages_limit=app_parameters.TLDR_MESSAGES["default"]):
     """Creates the discussion summary and sends it as the message.
 
     Args:
@@ -112,7 +121,7 @@ async def tldr(ctx, messages_limit=50):
     tracemalloc.start()
     channel = ctx.channel
     message_about_number_of_messages, messages_limit = format_tldr_input_number_to_int(
-        messages_limit, 300, 30
+        messages_limit, app_parameters.TLDR_MESSAGES["max"], app_parameters.TLDR_MESSAGES["min"]
     )
     if messages_limit is None:
         await ctx.send(message_about_number_of_messages)
@@ -137,9 +146,9 @@ async def tldr(ctx, messages_limit=50):
     if args.local:  # Used when we run models locally
         try:
             if args.ez_mode:
-                model = constants.MODEL_DISCORD_SUMMARY_LOCAL["ez"]
+                model = app_parameters.MODEL_DISCORD_SUMMARY_LOCAL["ez"]
             else:
-                model = constants.MODEL_DISCORD_SUMMARY_LOCAL["normal"]
+                model = app_parameters.MODEL_DISCORD_SUMMARY_LOCAL["normal"]
             loop = asyncio.get_running_loop()
             summary_generator = partial(cds.generate_summary, model, cleaned_content)
             logging.info("Starting generating the summary")
@@ -187,7 +196,11 @@ async def tldr_error(ctx, error):
 @bot.command(
     help="Tworzy podsumowanie filmu z YT, używasz komendy w odpowiedzi na wiadomość z linkiem"
 )
-@commands.cooldown(3, 60, commands.BucketType.user)
+@commands.cooldown(
+    app_parameters.COOLDOWN_RULES["requests"],
+    app_parameters.COOLDOWN_RULES["timestamp"],
+    commands.BucketType.user,
+)
 async def tldw(ctx):
     """Creates the summary of the given YouTube video.
     To use, it use the command in the response to the message with YT link."""
@@ -245,7 +258,11 @@ async def tldw_error(ctx, error):
 
 
 @bot.command(help="Wyjaśnia pojęcie, o które zapytasz w maksymalnie trzech słowach")
-@commands.cooldown(3, 60, commands.BucketType.user)
+@commands.cooldown(
+    app_parameters.COOLDOWN_RULES["requests"],
+    app_parameters.COOLDOWN_RULES["timestamp"],
+    commands.BucketType.user,
+)
 async def coto(ctx, *, thing: str):
     """Describes the given string"""
     channel_name = ctx.channel.name  # Used to give bot some context
@@ -306,9 +323,7 @@ async def on_disconnect():
     await bot.wait_until_ready()
 
 
-def format_tldr_input_number_to_int(
-    messages_number=50, upper_limit=300, lower_limit=30
-):
+def format_tldr_input_number_to_int(messages_number, upper_limit, lower_limit):
     """Formatting the input number (can be anything)"""
     try:
         messages_number = int(messages_number)
@@ -317,16 +332,16 @@ def format_tldr_input_number_to_int(
         message = "Nie podałeś liczby!"
         return message, None
     if messages_number > upper_limit:
-        messages_number = 300
+        messages_number = app_parameters.TLDR_MESSAGES["max"]
         message = (
-            "Jesteś zbyt zachłanny! Górny limit liczby wiadomości to 300."
+            f"Jesteś zbyt zachłanny! Górny limit liczby wiadomości to {messages_number}."
             " Zbijam liczbę wiadomości do tej wartości."
         )
     if messages_number < lower_limit:
-        messages_number = 30
+        messages_number = app_parameters.TLDR_MESSAGES["min"]
         message = (
             "Chcesz podsumować zbyt mało wiadomości. "
-            "Dolny limit to 30 i tyle mogę podsumować."
+            f"Dolny limit to {messages_number} i tyle mogę podsumować."
         )
     return message, messages_number
 

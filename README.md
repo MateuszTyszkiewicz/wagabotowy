@@ -59,16 +59,32 @@ It should work in a similar way when if you use venvs.
 
 ```pip install -r requirements.txt```
 
+5. Set up Windows Credentials:
+```Adress: DISCORD_BOT_TOKEN, Username: Wagabotowy, Password: <Your Discord bot token>```
+```Adress: GOOGLE_AI_API_KEY, Username: Wagabotowy, Password: <Your Gemini API key>```
+
+
 #### Running the bot
 
 To run the bot locally navigate to the project directory, activate the environment and use command:
 
 ```python discord\discord_summarizer.py```
 
+#### Running models locally
+
+1. To run models locally you need to install Ollama (or something similar) - that's the pretty straithforward app to manage and run LLMs on your local machine.
+
+2. Download correct models (names specified in `app_parameters`) using `ollama pull <model_name>` command.
+
+
 ### Available flags
 
 `--local` - LLM calculations are made locally, not recommended if Gemini API is available.   
 `--ez_mode` - run lighter models, requires much less computing power. Works only with --local flag.
+
+### Adjusting the app
+
+Despite being ready to run immidiately, the app architecture offers flexibility in terms of adjusting it's parameters. You can easily change many options like used models, system prompts and cooldown rules in `app_parameters.py` file.
 
 ## License
 
